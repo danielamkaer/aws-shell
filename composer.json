@@ -1,0 +1,15 @@
+{
+    "name": "daniel/aws-shell",
+    "authors": [
+        {
+            "name": "Daniel Amkær Sørensen",
+            "email": "daniel.amkaer@gmail.com"
+        }
+    ],
+    "require": {
+        "aws/aws-sdk-php": "^3.19"
+    },
+    "autoload": {
+        "classmap": ["src/"]
+    }
+}
