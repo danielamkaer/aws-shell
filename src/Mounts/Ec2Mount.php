@@ -3,7 +3,7 @@
 class Ec2Mount implements MountInterface
 {
 
-    protected $children = null;
+    protected $reservations = null;
 
     public function __construct(Shell $shell) {
         $this->shell = $shell;
@@ -22,23 +22,27 @@ class Ec2Mount implements MountInterface
         return ['by-instance-id'];
     }
 
+    protected function getReservations() {
+        if (!$this->reservations) {
+            $this->reservations = $this->client->describeInstances()['Reservations'];
+        }
+        return $this->reservations;
+    }
+
     protected function getChildrenByInstanceId() {
 
-        if (!$this->children) {
-            $instances = [];
+        $instances = [];
 
-            $reservations = $this->client->describeInstances()['Reservations'];
+        $reservations = $this->getReservations();
 
-            foreach ($reservations as $i => $reservation) {
-                foreach ($reservation['Instances'] as $j => $instance) {
-                    $instances[] = $instance['InstanceId'];
-                }
+        foreach ($reservations as $i => $reservation) {
+            foreach ($reservation['Instances'] as $j => $instance) {
+                $instances[] = $instance['InstanceId'];
             }
-
-            $this->children = $instances;
         }
 
-        return $this->children;
+
+        return $instances;
     }
 
 

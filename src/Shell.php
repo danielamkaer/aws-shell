@@ -63,17 +63,12 @@ class Shell
             }
             return $matches;
         }
-        return [];
-//        list($command) = explode(" ", $lineBuffer, 2);
-//
-//        $matches = [];
-//
-//        foreach ($this->commands as $cmd) {
-//            if (strncmp($cmd->getName(), $command, strlen($command)) == 0) {
-//                $matches[] = $command;
-//            }
-//        }
-//        return $matches;
+
+        $children = $this->getChildren();
+        $children = array_filter($children, function($child) use($line) {
+            return starts_with($child, $line) || empty($line);
+        });
+        return $children;
     }
 
     public function loop()
@@ -94,34 +89,70 @@ class Shell
         }
     }
 
-    public function getCurrentMount()
-    {
-        $pwd = $this->pwd;
+    public function getMountFor($path) {
         while (true) {
-            foreach ($this->mounts as $mount) {
-                if ($mount->getMountPoint() == $pwd) {
-                    return $mount;
-                }
+            $mount = array_first($this->mounts, function(MountInterface $mount) use ($path) {
+                return $mount->getMountPoint() == $path;
+            });
+
+            if ($mount) {
+                return $mount;
             }
-            $pwd = substr($pwd, 0, strrpos($pwd, '/'));
-            if ($pwd == '') {
-                $pwd = '/';
+
+            $path = substr($path, 0, strrpos($path, '/'));
+            if ($path == '') {
+                $path = '/';
             }
         }
         return null;
     }
 
+    public function getChildren($pwd = null) {
+        if ($pwd == null) {
+            $pwd = $this->pwd;
+        }
+
+        $mount = $this->getMountFor($pwd);
+        return $mount->getChildren($pwd);
+    }
+
+    public function getChild($path) {
+        $dir = dirname($path);
+        $name = basename($path);
+        return array_first($this->getChildren($dir), function($child) use ($name) {
+            return $child == $name;
+        });
+    }
+
+    public function getCurrentMount()
+    {
+        return $this->getMountFor($this->pwd);
+    }
+
     protected function interpret($line)
     {
-        $pieces = explode(" ",$line, 2);
-        $cmd = $pieces[0];
-
-        foreach ($this->commands as $command) {
-            if ($command->getName() == $cmd) {
-                $command->executeCommand(explode(" ", $pieces[1] ?? ""));
-                break;
-            }
+        if (empty(trim($line))) {
+            return;
         }
+
+        $pieces = explode(" ",$line, 2);
+        $cmdName = $pieces[0];
+
+        $command = array_first($this->commands, function(CommandInterface $command) use ($cmdName) {
+            return $command->getName() == $cmdName;
+        });
+
+        if ($command) {
+            $args = str_getcsv($pieces[1] ?? "", ' ');
+            if (count($args) == 1 && $args[0] == NULL) {
+                $args = [];
+            }
+
+            $command->executeCommand($args);
+        } else {
+            printf("Unknown command %s.\n", $cmdName);
+        }
+
     }
 
     public function addCommand(CommandInterface $cmd)

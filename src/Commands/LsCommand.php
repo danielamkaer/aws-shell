@@ -19,9 +19,19 @@ class LsCommand implements CommandInterface
 
     public function executeCommand(array $args)
     {
-        $children = $this->shell->getCurrentMount()->getChildren($this->shell->getPwd());
-        foreach ($children as $child) {
-            printf("%s\n", $child);
+        if (count($args) > 0) {
+            foreach ($args as $dir) {
+                printf("%s/\n", $dir);
+                $children = $this->shell->getChildren($this->shell->getPwd() . '/' . $dir);
+                foreach ($children as $child) {
+                    printf("%s\n", $child);
+                }
+            }
+        } else {
+            $children = $this->shell->getChildren();
+            foreach ($children as $child) {
+                printf("%s\n", $child);
+            }
         }
     }
 

@@ -19,12 +19,17 @@ class CdCommand implements CommandInterface
 
     public function executeCommand(array $args)
     {
-        $children = $this->shell->getCurrentMount()->getChildren($this->shell->getPwd());
-        foreach ($children as $child) {
-            if ($child == $args[0]) {
-                $this->shell->setPwd($this->shell->getPwd() . '/' . $child);
-            }
+        if (count($args) == 0) {
+            $this->shell->setPwd('/');
+            return;
         }
+
+        $child = $this->shell->getChild($this->shell->getPwd() . '/' . $args[0]);
+        if ($child) {
+            $this->shell->setPwd($this->shell->getPwd() . '/' . $child);
+            return;
+        }
+
     }
 
 }
