@@ -7,7 +7,8 @@
         }
     ],
     "require": {
-        "aws/aws-sdk-php": "^3.19"
+        "aws/aws-sdk-php": "^3.19",
+        "illuminate/support": "^5.3"
     },
     "autoload": {
         "classmap": ["src/"]
